@@ -1,0 +1,61 @@
+---
+title: "data_investigation"
+format: html
+---
+# Investigating White Grunt Data 
+
+## Load in libraries and data 
+
+Load necessary libraries
+```{r}
+library(here)
+library(janitor)
+library(tidyverse)
+library(ggplot2)
+```
+
+Load the data 
+```{r}
+grunt1 <- read_csv(here::here("data", "wg_stomachs.csv")) %>% 
+  clean_names()
+```
+
+```{r}
+class(grunt1$sediment_rocks)
+```
+
+
+```{r}
+content <- grunt1 %>% 
+  select(5:13) 
+
+sums <- colSums(content, na.rm = TRUE)
+
+content$invert_parts <- as.numeric(content$invert_parts)
+content$fish <- as.numeric(content$fish)
+
+sums
+
+org <- c('crab', 'shrimp', 'sed', 'shell', 'invert', 'plant', 'mush', 'fish', 'eggs')
+
+df <- data.frame(sums, org)
+
+rbind(sums)
+```
+
+```{r}
+# bar chart
+ggplot(df) + 
+  geom_col(aes(org, sums))
+
+```
+
+```{r}
+# Pie Chart 
+ggplot(df, aes(x = "", y = sums, fill = org)) +
+  geom_col(color = 'black') +
+  coord_polar(theta = "y") +
+    scale_fill_manual(values = c("#d92139","#e5e848", "#48a5e8","#405c82","#6b6656", "#3C8D53","#e8b527","#48dbe8","#fa98e0"))
+
+```
+
