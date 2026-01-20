@@ -1,0 +1,83 @@
+---
+title: "data_wrangling"
+format: html
+---
+Load the libraries 
+```{r}
+library(here)
+library(janitor)
+library(tidyverse)
+library(ggplot2)
+```
+
+Download the data 
+```{r}
+stomach <- read_csv(here::here("data", "wg_stomachs.csv")) %>% 
+  clean_names()
+
+grunts <- read_csv(here::here("data", "wg.csv")) %>% 
+  clean_names()
+
+```
+
+Data Wrangling 
+```{r}
+# Look at stomach datatypes 
+str(stomach)
+
+# NOTICE: stomach's `invert_parts` and `fish` are read as characters.
+# Need to switch the data types to numeric! 
+stomach$invert_parts <- as.numeric(stomach$invert_parts, na.rm = TRUE)
+stomach$fish <- as.numeric(stomach$fish, na.rm = TRUE)
+
+
+
+# Look at grunt datatypes 
+str(grunts)
+
+# NOTICE: grunt's `sl_cm`, `fl_cm`, `weight` are read as characters.
+# Need to switch the data types to numeric! 
+grunts$sl_cm <- as.numeric(grunts$sl_cm, na.rm = TRUE)
+grunts$fl_cm <- as.numeric(grunts$fl_cm, na.rm = TRUE)
+grunts$weight <- as.numeric(grunts$weight, na.rm = TRUE)
+
+# Switch `date` be read as a date-time  
+grunts$date <- as_date(grunts$date)
+
+```
+
+
+Add `total_gram` column (column with the total grams of each fish)
+```{r}
+stomach <- stomach %>% 
+  rowwise() %>% # By Row
+  mutate(total_grams = sum(c_across(5:14), na.rm = TRUE)) # Calculate the sum of all measurements across each row 
+
+# `Mutate` makes a new row called 'total_grams'
+```
+
+Make each cell a percentage (gram measurement / total_grams)
+```{r}
+# Make a new dataframe called `stomach_perc` with `stomach` data
+stomach_perc <- stomach 
+
+# Divide all numeric cells by the total gram column 
+stomach_perc[, 5:14] <- stomach_perc[, 5:14] / stomach_perc$total_grams  
+
+```
+
+Join stomach content and white grunt characteristic together 
+```{r}
+white_grunt_df <- left_join(stomach_perc, grunts, by = 'id_number') %>% # Join grunt data to stomach_perc data 
+  select(-c(x19, snake, species.y, x11)) # removing unnecessary columns 
+
+```
+
+
+Exploring the data 
+Looking a the mean percentages for each column 
+```{r}
+colMeans(white_grunt_df[, 5:12], na.rm = TRUE)
+```
+
+
